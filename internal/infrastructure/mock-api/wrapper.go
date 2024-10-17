@@ -66,7 +66,7 @@ func (b *bank) CheckValidAccount(ctx context.Context, req CheckValidAccountReque
 		err = fmt.Errorf("cannot check valid account")
 		return
 	}
-	request, err := http.NewRequest(http.MethodPost, config.GetString("postman.mocks.url"), bytes.NewBuffer(payload))
+	request, err := http.NewRequest(http.MethodPost, config.GetString("postman.mocks.url")+config.GetString("postman.mocks.checkAccount"), bytes.NewBuffer(payload))
 	if err != nil {
 		slog.ErrorContext(ctx, "[Bank.CheckValidAccount]", "error when create request", err.Error())
 		err = fmt.Errorf("cannot check valid account")

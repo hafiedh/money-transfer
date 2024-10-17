@@ -19,10 +19,4 @@ type (
 		Amount     string `json:"amount" validate:"required"`
 		Status     string `json:"status" validate:"required"`
 	}
-
-	DefaultResponse struct {
-		Message string `json:"message"`
-		Status  int    `json:"status"`
-		Data    any    `json:"data"`
-	}
 )

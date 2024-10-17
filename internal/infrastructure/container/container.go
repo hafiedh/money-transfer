@@ -4,8 +4,11 @@ import (
 	"fmt"
 
 	"money-transfer/internal/config"
+	"money-transfer/internal/domain/repositories"
+	mockapi "money-transfer/internal/infrastructure/mock-api"
 	"money-transfer/internal/infrastructure/postgres"
 	"money-transfer/internal/usecase/healthcheck"
+	"money-transfer/internal/usecase/transfer"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -14,6 +17,7 @@ type Container struct {
 	Config             *config.DefaultConfig
 	PostgresDB         *pgxpool.Pool
 	HealthCheckService healthcheck.Service
+	TransferService    transfer.TransferSvc
 }
 
 func (c *Container) Validate() *Container {
@@ -25,6 +29,9 @@ func (c *Container) Validate() *Container {
 	}
 	if c.PostgresDB == nil {
 		panic("PostgresDB is nil")
+	}
+	if c.TransferService == nil {
+		panic("TransferService is nil")
 	}
 	return c
 }
@@ -56,16 +63,23 @@ func New() *Container {
 		PoolMaxConns: config.GetInt("postgresql.money_transfer_db.poolMaxConns"),
 	}
 
+	// repo and db
 	postgresDB, err := postgres.NewDB(*postgresConfig)
 	if err != nil {
 		fmt.Printf("Error connecting to PostgreSQL database: %v", err)
 	}
+	transferRepo := repositories.NewTransferRepo(postgresDB)
+	bankWrapper := mockapi.NewBank()
+
+	// service
 	healthCheckService := healthcheck.NewService().Validate()
+	transferService := transfer.NewTransferSvc(transferRepo, bankWrapper)
 
 	container := &Container{
 		Config:             defConfig,
 		HealthCheckService: healthCheckService,
 		PostgresDB:         postgresDB,
+		TransferService:    transferService,
 	}
 	container.Validate()
 	return container
