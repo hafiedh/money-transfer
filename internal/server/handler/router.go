@@ -13,5 +13,6 @@ func SetupRouter(e *echo.Echo, cnt *container.Container) {
 	banks := e.Group("/v1/banks")
 	{
 		banks.POST("/check-account", h.transferHandler.CheckBankAccount)
+		banks.POST("/transfer", h.transferHandler.TransferMoney)
 	}
 }

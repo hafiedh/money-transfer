@@ -1,7 +1,5 @@
 package mockapi
 
-import "time"
-
 type (
 	CheckValidAccountRequest struct {
 		AccountNumber string `json:"account_number"`
@@ -42,6 +40,6 @@ type (
 		TransactionID     string               `json:"transaction_id"`
 		ExternalID        string               `json:"external_id"`
 		Status            string               `json:"status"`
-		TransactionDate   time.Time            `json:"transaction_date"`
+		TransactionDate   string               `json:"transaction_date"`
 	}
 )

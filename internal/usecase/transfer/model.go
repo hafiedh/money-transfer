@@ -2,11 +2,11 @@ package transfer
 
 type (
 	MoneyTransfer struct {
-		ExternalID string  `json:"external_id" validate:"required"`
-		Amount     float64 `json:"amount" validate:"required"`
-		FromAcount string  `json:"from_acount" validate:"required"`
-		ToAccount  string  `json:"to_account" validate:"required"`
-		ToBankCode string  `json:"to_bank_code" validate:"required"`
+		ExternalID  string  `json:"external_id,omitempty"`
+		Amount      float64 `json:"amount" validate:"required"`
+		FromAccount string  `json:"from_acount" validate:"required"`
+		ToAccount   string  `json:"to_account" validate:"required"`
+		ToBankCode  string  `json:"to_bank_code" validate:"required"`
 	}
 
 	CheckValidAccount struct {

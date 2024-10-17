@@ -31,8 +31,8 @@ func NewTransferRepo(db *pgxpool.Pool) TransferRepo {
 }
 
 func (r *productRepo) Create(ctx context.Context, transfer entities.Transfer) error {
-	_, err := r.db.Exec(ctx, "INSERT INTO transfers (from_account_id, to_account_id, amount, status) VALUES ($1, $2, $3, $4)",
-		transfer.FromAccountID, transfer.ToAccountID, transfer.Amount, transfer.Status)
+	_, err := r.db.Exec(ctx, `INSERT INTO transfers (payment_ref, from_account_number, to_account_number, amount, status, trx_id)
+		VALUES ($1, $2, $3, $4, $5, $6)`, transfer.PaymentRef, transfer.FromAccountID, transfer.ToAccountID, transfer.Amount, transfer.Status, transfer.TrxID)
 	if err != nil {
 		slog.ErrorContext(ctx, "[ProductRepo.Create] Error: %v", err)
 		err = fmt.Errorf("failed to create transfer")
@@ -40,6 +40,7 @@ func (r *productRepo) Create(ctx context.Context, transfer entities.Transfer) er
 	}
 
 	return nil
+
 }
 
 func (r *productRepo) UpdateStatus(ctx context.Context, paymentRef, status string) error {

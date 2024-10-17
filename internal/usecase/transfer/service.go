@@ -2,17 +2,21 @@ package transfer
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
 	"money-transfer/internal/domain/entities"
 	"money-transfer/internal/domain/repositories"
 	mockapi "money-transfer/internal/infrastructure/mock-api"
 	"money-transfer/internal/pkg"
+	"strings"
+	"time"
 )
 
 type (
 	TransferSvc interface {
-		Create(ctx context.Context, transfer entities.Transfer) (res pkg.DefaultResponse, err error)
+		Create(ctx context.Context, req MoneyTransfer) (res pkg.DefaultResponse, err error)
 		UpdateStatus(ctx context.Context, paymentRef string, status string) (res pkg.DefaultResponse, err error)
 		CheckValidAccount(ctx context.Context, req CheckValidAccount) (res pkg.DefaultResponse, err error)
 	}
@@ -37,10 +41,53 @@ func NewTransferSvc(transferRepo repositories.TransferRepo, mock mockapi.Bank) T
 	}
 }
 
-func (s *transferSvc) Create(ctx context.Context, transfer entities.Transfer) (res pkg.DefaultResponse, err error) {
+func (s *transferSvc) Create(ctx context.Context, req MoneyTransfer) (res pkg.DefaultResponse, err error) {
+	paymentRef, err := generatePaymentRef(req.FromAccount)
+	if err != nil {
+		slog.ErrorContext(ctx, "[service][generatePaymentRef]: %v", err)
+		err = fmt.Errorf("cannot generate payment ref")
+		return
+	}
+
+	transferWrapper := mockapi.TransferMoneyRequest{
+		ExternalID:  paymentRef,
+		FromAccount: req.FromAccount,
+		ToAccount:   req.ToAccount,
+		ToBankCode:  req.ToBankCode,
+		Amount:      req.Amount,
+	}
+
+	resWrapper, errWrapper := s.mockApi.TransferMoney(ctx, transferWrapper)
+	if errWrapper != nil {
+		slog.ErrorContext(ctx, "[service][wrapper] Create: %v", err)
+		err = errWrapper
+		return
+	}
+
+	entryData := entities.Transfer{
+		PaymentRef:    paymentRef,
+		TrxID:         resWrapper.Data.TransactionID,
+		FromAccountID: req.FromAccount,
+		ToAccountID:   req.ToAccount,
+		Amount:        req.Amount,
+		Status:        "pending",
+	}
+
+	err = s.transferRepo.Create(ctx, entryData)
+	if err != nil {
+		slog.ErrorContext(ctx, "[service][repo] Create: %v", err)
+		err = fmt.Errorf("cannot create transfer")
+		return
+	}
+
+	res = pkg.DefaultResponse{
+		Message: "Success",
+		Status:  201,
+		Data:    struct{}{},
+	}
+
 	return
 }
-
 func (s *transferSvc) UpdateStatus(ctx context.Context, paymentRef string, status string) (res pkg.DefaultResponse, err error) {
 	return
 }
@@ -64,4 +111,20 @@ func (s *transferSvc) CheckValidAccount(ctx context.Context, req CheckValidAccou
 
 	return
 
+}
+
+func generatePaymentRef(AccountNumber string) (string, error) {
+	randomBytes := make([]byte, 5)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+
+	randomString := strings.ToUpper(hex.EncodeToString(randomBytes))
+	phoneLast5 := AccountNumber[len(AccountNumber)-5:]
+	secondsInDay := time.Now().Hour()*3600 + time.Now().Minute()*60 + time.Now().Second()
+	timeComponent := fmt.Sprintf("%05d", secondsInDay)
+	paymentCode := fmt.Sprintf("TF-%s%s%s", randomString[:3], phoneLast5[:2], timeComponent[:5])
+
+	return paymentCode, nil
 }

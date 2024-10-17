@@ -30,7 +30,8 @@ func (b *bank) TransferMoney(ctx context.Context, req TransferMoneyRequest) (res
 		err = fmt.Errorf("cannot transfer money")
 		return
 	}
-	request, err := http.NewRequest(http.MethodPost, config.GetString("postman.mocks.url"), bytes.NewBuffer(payload))
+
+	request, err := http.NewRequest(http.MethodPost, config.GetString("postman.mocks.url")+config.GetString("postman.mocks.transfer"), bytes.NewBuffer(payload))
 	if err != nil {
 		slog.ErrorContext(ctx, "[Bank.TransferMoney]", "error when create request", err.Error())
 		err = fmt.Errorf("cannot transfer money")
@@ -52,6 +53,12 @@ func (b *bank) TransferMoney(ctx context.Context, req TransferMoneyRequest) (res
 	if err != nil {
 		slog.ErrorContext(ctx, "[Bank.TransferMoney]", "error when decode response", err.Error())
 		err = fmt.Errorf("cannot transfer money")
+		return
+	}
+
+	if resp.Status != http.StatusCreated {
+		slog.ErrorContext(ctx, "[Bank.TransferMoney]", "error when transfer money", resp.Message)
+		err = fmt.Errorf(resp.Message)
 		return
 	}
 
