@@ -29,7 +29,7 @@ type (
 
 func NewTransferSvc(transferRepo repositories.TransferRepo, mock mockapi.Bank) TransferSvc {
 	if transferRepo == nil {
-		panic("ProductRepo is required")
+		panic("money-transferRepo is required")
 	}
 	if mock == nil {
 		panic("MockApi is required")
