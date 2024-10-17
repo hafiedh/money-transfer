@@ -17,7 +17,7 @@ import (
 type (
 	TransferSvc interface {
 		Create(ctx context.Context, req MoneyTransfer) (res pkg.DefaultResponse, err error)
-		UpdateStatus(ctx context.Context, paymentRef string, status string) (res pkg.DefaultResponse, err error)
+		UpdateStatus(ctx context.Context, req TransferCallback) (res pkg.DefaultResponse, err error)
 		CheckValidAccount(ctx context.Context, req CheckValidAccount) (res pkg.DefaultResponse, err error)
 	}
 
@@ -88,7 +88,36 @@ func (s *transferSvc) Create(ctx context.Context, req MoneyTransfer) (res pkg.De
 
 	return
 }
-func (s *transferSvc) UpdateStatus(ctx context.Context, paymentRef string, status string) (res pkg.DefaultResponse, err error) {
+func (s *transferSvc) UpdateStatus(ctx context.Context, req TransferCallback) (res pkg.DefaultResponse, err error) {
+	entryData := entities.Transfer{
+		Amount:     req.Amount,
+		PaymentRef: req.ExternalID,
+		Status:     req.Status,
+	}
+	errCh := make(chan error, 1)
+
+	go func() {
+		errCh <- s.transferRepo.UpdateStatus(ctx, entryData)
+	}()
+
+	select {
+	case err = <-errCh:
+		if err != nil {
+			slog.ErrorContext(ctx, "[service] UpdateStatus: %v", err)
+			err = fmt.Errorf("cannot update status")
+			return
+		}
+	case <-ctx.Done():
+		slog.ErrorContext(ctx, "[service] UpdateStatus: context canceled")
+		err = fmt.Errorf("context canceled")
+		return
+	}
+
+	res = pkg.DefaultResponse{
+		Message: "Success",
+		Status:  200,
+		Data:    struct{}{},
+	}
 	return
 }
 

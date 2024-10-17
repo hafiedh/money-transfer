@@ -14,5 +14,6 @@ func SetupRouter(e *echo.Echo, cnt *container.Container) {
 	{
 		banks.POST("/check-account", h.transferHandler.CheckBankAccount)
 		banks.POST("/transfer", h.transferHandler.TransferMoney)
+		banks.POST("/callback", h.transferHandler.TransferCallback)
 	}
 }

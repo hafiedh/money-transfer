@@ -15,8 +15,8 @@ type (
 	}
 
 	TransferCallback struct {
-		ExternalID string `json:"external_id" validate:"required"`
-		Amount     string `json:"amount" validate:"required"`
-		Status     string `json:"status" validate:"required"`
+		ExternalID string  `json:"external_id" validate:"required"`
+		Amount     float64 `json:"amount" validate:"required"`
+		Status     string  `json:"status" validate:"required"`
 	}
 )

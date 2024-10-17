@@ -77,7 +77,45 @@ func (h *transferHandler) TransferMoney(e echo.Context) (err error) {
 
 func (h *transferHandler) TransferCallback(e echo.Context) (err error) {
 	defer recoveryPanicHandler()
-	return
+	ctx := e.Request().Context()
+
+	var req transfer.TransferCallback
+
+	if err = e.Bind(&req); err != nil {
+		slog.ErrorContext(ctx, "TransferCallback: %v", err)
+		return e.JSON(http.StatusBadRequest,
+			pkg.DefaultResponse{
+				Message: "Invalid request",
+				Status:  http.StatusBadRequest,
+				Data:    struct{}{},
+			},
+		)
+	}
+
+	if err := e.Validate(req); err != nil {
+		slog.Error("Validation error: %v", err)
+		return e.JSON(http.StatusBadRequest,
+			pkg.DefaultResponse{
+				Message: "Invalid request",
+				Status:  http.StatusBadRequest,
+				Data:    struct{}{},
+			},
+		)
+	}
+
+	res, err := h.transferService.UpdateStatus(ctx, req)
+	if err != nil {
+		slog.ErrorContext(ctx, "TransferCallback: %v", err)
+		return e.JSON(http.StatusInternalServerError,
+			pkg.DefaultResponse{
+				Message: err.Error(),
+				Status:  http.StatusBadRequest,
+				Data:    struct{}{},
+			},
+		)
+	}
+
+	return e.JSON(http.StatusOK, res)
 }
 
 func (h *transferHandler) CheckBankAccount(e echo.Context) (err error) {
