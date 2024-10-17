@@ -37,3 +37,7 @@ To run the application locally without Docker, use the following commands:
 - `pkg/`: Shared constants and utilities.
 - `server/`: HTTP server and handlers.
 - `usecase/`: Use case implementations.
+- `mocks`: Mocks for testing.
+postman.mocks.url=https://3f3cb471-213f-445e-a1b3-b21b6aecaed0.mock.pstmn.io
+postman.mocks.checkAccount=/banks/account-check
+postman.mocks.transfer=/banks/transfer
